@@ -1,0 +1,17 @@
+design_pkg.vhd
+xoodyak_constants.vhd
+counter.vhd
+register.vhd
+xoodoo_round.vhd
+cyclist_ops.vhd
+NIST_LWAPI_pkg.vhd
+key_piso.vhd
+fwft_fifo.vhd
+data_sipo.vhd
+data_piso.vhd
+StepDownCountLd.vhd
+PreProcessor.vhd
+PostProcessor.vhd
+CryptoCore.vhd
+LWC.vhd
+
