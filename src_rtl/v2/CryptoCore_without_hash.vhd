@@ -1,3 +1,18 @@
+--------------------------------------------------------------------------------
+--! @file       CryptoCore_without_hash.vhd
+--! @brief      
+--! @author     Richard Haeussler
+--! @copyright  Copyright (c) 2020 Cryptographic Engineering Research Group
+--!             ECE Department, George Mason University Fairfax, VA, U.S.A.
+--!             All rights Reserved.
+--! @license    This project is released under the GNU Public License.
+--!             The license and distribution terms for this file may be
+--!             found in the file LICENSE in this distribution or at
+--!             http://www.gnu.org/licenses/gpl-3.0.txt
+--! @note       This is publicly available encryption source code that falls
+--!             under the License Exception TSU (Technology and software-
+--!             unrestricted)
+--------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
