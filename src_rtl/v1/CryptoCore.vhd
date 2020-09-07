@@ -347,7 +347,7 @@ begin
                 end_of_block <= '1';
             end if;
             if bdi_type = HDR_MSG or bdi_type = HDR_CT or bdi_type = "0000" then
-                if bdi_valid = '1' then
+                if bdi_valid = '1' and bdo_ready = '1' then
                     if bdi_eot = '1' then
                         n_cyc_s <= CYC_ADD_BYTE;
                         if bdi_size = "100" then
@@ -440,7 +440,7 @@ begin
                     else
                         state_main_en <= "101";
                     end if;
-                elsif bdi_valid = '1' and bdi_size(1 downto 0) /= "00" and dcount_int < 6 then
+                elsif bdi_valid = '1' and bdo_ready = '1' and bdi_size(1 downto 0) /= "00" and dcount_int < 6 then
                     bdi_ready_s <= '1';
                     cycd_sel <= bdi_size(1 downto 0);
                     if bdi_type = HDR_MSG then
