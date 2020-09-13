@@ -111,7 +111,7 @@ architecture behavioral of CryptoCore is
            INIT_HASH);
     signal n_cyc_s, cyc_s: cycstate_t;
     
-    type mess_states_t is (ABSORB_NONCE,  ABSORB_AD, ABSORB_MSG, SQUEEZE, ABSORB_HASH, STORE_KEY);
+    type mess_states_t is (ABSORB_NONCE,  ABSORB_AD, ABSORB_MSG, SQUEEZE, SQUEEZE2, ABSORB_HASH, STORE_KEY);
     signal calling_state, n_calling_state: mess_states_t;
     
     signal state_type_match: boolean;
@@ -528,6 +528,8 @@ begin
                 n_calling_state <= ABSORB_AD;
             elsif (calling_state = ABSORB_AD) then
                 n_calling_state <= ABSORB_MSG;
+            elsif (calling_state = SQUEEZE2) then
+                null;
             else
                 n_calling_state <= SQUEEZE;
             end if;
@@ -580,7 +582,7 @@ begin
                 load_dcount <= '1';
                 load_rnd <= '1';
                 --Jump to CYC_DOWN_1 unless tag needs to be verified
-                if (calling_state = SQUEEZE) then
+                if (calling_state = SQUEEZE or calling_state = SQUEEZE2) then
                     n_cyc_s <= CYC_UP_EXTRACT;
                 elsif (calling_state = STORE_KEY) then
                     n_cyc_s <= STORE_KEY;
@@ -606,9 +608,15 @@ begin
             end if;
             --Send end_of_block when TAG_SIZE_CW is reached
             if (dcount_int = TAG_SIZE_CW - 1 ) then
-                end_of_block <= '1';
-                n_cyc_s <= IDLE;
-            end if; 
+                if mode = HASH and calling_state /= SQUEEZE2 then
+                    n_cyc_s <=  CYC_ADD_BYTE;
+                    n_calling_state <=  SQUEEZE2;
+                    load_dcount <= '1';
+                else
+                    end_of_block <= '1';
+                    n_cyc_s <= IDLE;
+                end if;
+            end if;
         else
             --Verify the TAG if not set the tag to not verified
             if bdi_valid = '1' and msg_auth_ready = '1' then
