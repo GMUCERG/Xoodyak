@@ -21,6 +21,7 @@ package Design_pkg is
     -- Range definition must not change.
     constant AD_CNT_WIDTH    : integer range 4 to 64 := 32;  --! Width of AD Bit counter
     constant MSG_CNT_WIDTH   : integer range 4 to 64 := 32;  --! Width of MSG (PT/CT) Bit counter
+    constant HASH_VALUE_SIZE : integer := 256; --! Hash value size
 
     --! Asynchronous and active-low reset.
     --! Can be set to `True` when targeting ASICs given that your CryptoCore supports it.
@@ -30,7 +31,6 @@ package Design_pkg is
 --------------------------------------------------------------------------------
     --! design parameters needed by the Pre- and Postprocessor
     constant TAG_SIZE        : integer := 128; --! Tag size
-    constant HASH_VALUE_SIZE : integer := 128; --! Hash value size
     
     constant CCSW            : integer :=32; --! variant dependent design parameters are assigned in body!
     constant CCW             : integer :=32; --! variant dependent design parameters are assigned in body!

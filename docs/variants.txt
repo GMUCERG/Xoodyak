@@ -34,15 +34,15 @@ f.  Execution times
     Execution time of authenticated decryption:
         26+MAX((24*Na+Ina(13+Bla/4)),13)+MAX(19*Nc+Inc(13+Blc/4),13)+13+5
     Execution time for hashing:
-        4+(17*Nh)+Inh(13+Blh/16)+4
+        4+(17*Nh)+Inh(13+Blh/16)+4+13+4
 
     Excel AEAD: =26+MAX(24*FLOOR(D2/44)+CEILING((MOD(D2,44)/44))*(13+FLOOR((MOD(D2,44)/4))),13)+MAX(19*FLOOR(E2/24)+CEILING((MOD(E2,24)/24))*(13+FLOOR((MOD(E2,24)/4))),13)+13+4)
 
 g.  Latencies
     latency of authenticated encryption
-    13 
+    1
     latency of authenticated decryption
-    13
+    1
 h.  Difference between execution times for new key and the same key
     New key 26  vs same key 8 = 16
     Execution time of authenticated encryption:
@@ -80,13 +80,13 @@ f.  Execution times
     Execution time of authenticated decryption:
         277+MAX((266*Na+Ina(255+Bla/4)),255)+MAX(261*Nc+Inc(255+Blc/4),255)+255+4
     Execution time for hashing:
-        16+(259*Nh)+Inh(255+Blh/4)+4
+        16+(259*Nh)+Inh(255+Blh/4)+4+253+4
     PERM time 252 + 3 = 255
 g.  Latencies
     latency of authenticated encryption
-    254
+    1
     latency of authenticated decryption
-    254
+    1
 h.  Difference between execution times for new key and the same key
     New key vs same key
     269+259    3+259 difference 266
