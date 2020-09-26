@@ -3,7 +3,7 @@ Notation common for all variants:
 Na, Nm, Nc, Nh : the number of complete blocks of associated data, plaintext, ciphertext, and hash message, respectively
 Ina, Inm, Inc, Inh : binary variables equal to 1 if the last block of the respective data type is incomplete, and 0 otherwise
 Bla, Blm, Blc, and Blh : the number of bytes in the incomplete block of associated data, plaintext, ciphertext, and hash message, respectively
-
+-------------------------------------------------------------------------------
 V1
 a. Design goal
 
@@ -12,6 +12,9 @@ Basic iterative full datapath width
    1) < 2000 LUTs
    2) No BRAMS
    3) no DSP units
+
+If support for ASIC build set ASYNC_RST to `true` in LWCsrc/NIST_LWAPI_pkg.vhd
+If key reuse support is desire set STORE_KEY to `true` in src_rtl/v1/design_pkg.vhd
 
 b. Supported maximum size of inputs: Support for all message sizes
 c. Reference software implementation:
@@ -32,11 +35,9 @@ f.  Execution times
     Execution time of authenticated encryption:
         26+MAX((24*Na+Ina(13+Bla/4)),13)+MAX(19*Nm+Inm(13+Blm/4),13)+13+4
     Execution time of authenticated decryption:
-        26+MAX((24*Na+Ina(13+Bla/4)),13)+MAX(19*Nc+Inc(13+Blc/4),13)+13+5
+        26+MAX((24*Na+Ina(13+Bla/4)),13)+MAX(19*Nc+Inc(13+Blc/4),13)+13+4
     Execution time for hashing:
-        4+(17*Nh)+Inh(13+Blh/16)+4+13+4
-
-    Excel AEAD: =26+MAX(24*FLOOR(D2/44)+CEILING((MOD(D2,44)/44))*(13+FLOOR((MOD(D2,44)/4))),13)+MAX(19*FLOOR(E2/24)+CEILING((MOD(E2,24)/24))*(13+FLOOR((MOD(E2,24)/4))),13)+13+4)
+        4+MAX((17*Nh, 13)+Inh(13+Blh/4)+4+13+4
 
 g.  Latencies
     latency of authenticated encryption
@@ -48,11 +49,9 @@ h.  Difference between execution times for new key and the same key
     Execution time of authenticated encryption:
         8+MAX((24*Na+Ina(13+Bla/4)),13)+MAX(19*Nm+Inm(13+Blm/4),13)+13+4
     Execution time of authenticated decryption:
-        8+MAX((24*Na+Ina(13+Bla/4)),13)+MAX(19*Nc+Inc(13+Blc/4),13)+13+5
+        8+MAX((24*Na+Ina(13+Bla/4)),13)+MAX(19*Nc+Inc(13+Blc/4),13)+13+4
 
-
-
-
+-------------------------------------------------------------------------------
 V2
 a. 128 bit datapath supports both AEAD Encrypt/Decrypt and hashing
    Folded
@@ -95,3 +94,4 @@ h.  Difference between execution times for new key and the same key
     Execution time of authenticated decryption:
         11+MAX((266*Na+Ina(255+Bla/4)),255)+MAX(261*Nc+Inc(255+Blc/4),255)+255+4
 
+---------------------------------------------------------------------------------

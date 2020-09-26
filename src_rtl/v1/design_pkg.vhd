@@ -23,9 +23,8 @@ package Design_pkg is
     constant MSG_CNT_WIDTH   : integer range 4 to 64 := 32;  --! Width of MSG (PT/CT) Bit counter
     constant HASH_VALUE_SIZE : integer := 256; --! Hash value size
 
-    --! Asynchronous and active-low reset.
-    --! Can be set to `True` when targeting ASICs given that your CryptoCore supports it.
-    --constant ASYNC_RSTN      : boolean := false;
+    -- Set to true to allow the same key to be used across messages
+    constant STORE_KEY       : boolean := false;
 --------------------------------------------------------------------------------
 ------------------------- DO NOT CHANGE ANYTHING BELOW -------------------------
 --------------------------------------------------------------------------------

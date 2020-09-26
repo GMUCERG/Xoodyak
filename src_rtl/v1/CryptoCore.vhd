@@ -18,7 +18,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.std_logic_misc.all;
 use work.NIST_LWAPI_pkg.all;
-use work.Design_pkg.all;
+use work.design_pkg.all;
 use work.xoodyak_constants.all;
 
 
@@ -113,8 +113,6 @@ architecture behavioral of CryptoCore is
     signal bdo_type_s                   : std_logic_vector(3 downto 0);
     
     -- This signal is used to send header messages
-    signal n_msg_auth_valid_s           : std_logic;
-    signal n_msg_auth_s                 : std_logic;
     signal n_tag_verified, tag_verified :std_logic;
     
     signal bdi_eot_prev, n_bdi_eot_prev : std_logic;
@@ -224,8 +222,8 @@ begin
       end_of_block <= '0';
       n_decrypt_op_s <= decrypt_op_s;
       
-      n_msg_auth_valid_s <= '0';
-      n_msg_auth_s <= '0';
+      msg_auth_valid <= '0';
+      msg_auth <= '0';
       n_tag_verified <= '1';
       
       n_gtr_one_perm <= gtr_one_perm;
@@ -560,15 +558,15 @@ begin
                 bdi_ready_s <= '1';
                 en_dcount <= '1';
                 if (dcount_int = TAG_SIZE_CW - 1) then
-                    n_msg_auth_valid_s <= '1';
+                    msg_auth_valid <= '1';
                     n_cyc_s <= IDLE;
                     --Final TAG word did not match
                     if (bdi_s /= bdo_s) then
-                        n_msg_auth_s <= '0';
+                        msg_auth <= '0';
                     else
                         --The final tag matched and if there other tags matched
                         --this will be true otherwise false
-                        n_msg_auth_s <= tag_verified;
+                        msg_auth <= tag_verified;
                     end if;
                 else
                     --Prior to the final tag update tag_verified to false if they
@@ -582,15 +580,13 @@ begin
     end case;
   end process;
   
-
-p_reg: process(clk)
+GEN_p_reg_SYNC_RST: if (not ASYNC_RSTN) generate
+    p_reg: process(clk)
     begin
         if rising_edge(clk) then
             if (rst = '1') then
                 cyc_s               <= IDLE;
                 mode                <= HASH;
-                msg_auth            <= '0';
-                msg_auth_valid      <= '0';
                 tag_verified        <= '0';
                 calling_state       <= ABSORB_NONCE;
                 gtr_one_perm        <= '0';
@@ -600,8 +596,6 @@ p_reg: process(clk)
                 cyc_s               <= n_cyc_s;
                 mode                <= n_mode;
                 tag_verified        <= n_tag_verified;
-                msg_auth_valid      <= n_msg_auth_valid_s;
-                msg_auth            <= n_msg_auth_s;
                 calling_state       <= n_calling_state;
                 gtr_one_perm        <= n_gtr_one_perm;
                 decrypt_op_s        <= n_decrypt_op_s;
@@ -609,4 +603,28 @@ p_reg: process(clk)
             end if;
         end if;
     end process p_reg;
+end generate GEN_p_reg_SYNC_RST;
+GEN_p_reg_ASYNC_RSTN: if (ASYNC_RSTN) generate
+    p_reg: process(clk, rst)
+    begin
+        if (rst = '0') then
+            cyc_s               <= IDLE;
+            mode                <= HASH;
+            tag_verified        <= '0';
+            calling_state       <= ABSORB_NONCE;
+            gtr_one_perm        <= '0';
+            decrypt_op_s        <= '0';
+            bdi_eot_prev        <= '0';
+        elsif rising_edge(clk) then
+            cyc_s               <= n_cyc_s;
+            mode                <= n_mode;
+            tag_verified        <= n_tag_verified;
+            calling_state       <= n_calling_state;
+            gtr_one_perm        <= n_gtr_one_perm;
+            decrypt_op_s        <= n_decrypt_op_s;
+            bdi_eot_prev      <= n_bdi_eot_prev;
+        end if;
+    end process p_reg;
+end generate GEN_p_reg_ASYNC_RSTN;
 end behavioral;
+

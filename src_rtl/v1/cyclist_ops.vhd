@@ -17,6 +17,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
 use work.xoodyak_constants.all;
+use work.design_pkg.all;
 
 entity cyclist_ops is
     generic(
@@ -175,7 +176,7 @@ begin
             din  => state_main_in_p2,
             qout => state_main_out_plane2
         );
-
+GEN_store_key: if (STORE_KEY) generate
     key_in <= state_main_in_p2 & state_main_in_p1 & state_main_in_p0;
     key_state: entity work.reg_custom
         generic map ( LEN => ADDRESS_LEN)
@@ -185,6 +186,7 @@ begin
             din  => key_in,
             qout => key_out
         );
+end generate GEN_store_key;
     perm_input <= state_main_out_plane2 & state_main_out_plane1 & state_main_out_plane0;
     XOODOO_PERM: entity work.xoodoo_round
         generic map(
