@@ -97,20 +97,14 @@ architecture behavioral of CryptoCore is
   
   
     --Key signals
-    signal key_ready_s:std_logic;
     signal key_s: std_logic_vector(CCSW-1 downto 0);
   
     --data signals
-    signal bdi_ready_s:std_logic;
     signal bdi_s : std_logic_vector(CCW - 1 downto 0);
-    signal bdi_valid_bytes_s: std_logic_vector(CCWdiv8 - 1 downto 0);
     signal decrypt_op_s, n_decrypt_op_s: std_logic;
     
     -- Output signals
     signal bdo_s                        : std_logic_vector(CCW - 1 downto 0);
-    signal bdo_valid_bytes_s            : std_logic_vector(CCWdiv8 - 1 downto 0);
-    signal bdo_valid_s                  : std_logic;
-    signal bdo_type_s                   : std_logic_vector(3 downto 0);
     
     -- This signal is used to send header messages
     signal n_tag_verified, tag_verified :std_logic;
@@ -163,25 +157,20 @@ begin
     dcount_int <= to_integer(unsigned(dcount));
     
     --Mapping 
-    key_ready <= key_ready_s;
     key_s <= reverse_byte(key);
     --bdi
-    bdi_ready <= bdi_ready_s;
     bdi_s               <= reverse_byte(bdi);
-    bdi_valid_bytes_s   <= reverse_bit(bdi_valid_bytes);
     
       
     --data outputs
     bdo                 <= reverse_byte(bdo_s);
-    bdo_valid_bytes     <= reverse_bit(bdo_valid_bytes_s);
-    bdo_valid           <= bdo_valid_s;
-    bdo_type            <= bdo_type_s;
+    bdo_valid_bytes     <= bdi_valid_bytes;
     
     
     top_level_states: process(cyc_s, calling_state,
                             decrypt_op_s, decrypt_in,
                             bdo_s, bdo_ready,
-                            bdi_valid, bdi_s,  bdi_valid_bytes_s, bdi_type, bdi_size, bdi_eot, bdi_eot_prev,
+                            bdi_valid, bdi_s,  bdi_valid_bytes, bdi_type, bdi_size, bdi_eot, bdi_eot_prev,
                             hash_in, gtr_one_perm,
                             dcount_int, rnd_counter,
                             mode,
@@ -194,8 +183,8 @@ begin
       n_mode              <= mode;
       
       --default values
-      key_ready_s         <= '0';
-      bdi_ready_s         <= '0';
+      key_ready         <= '0';
+      bdi_ready         <= '0';
       
       --state_ram_defaults
       state_main_sel      <= "0000000";    --defaults to perm_addr
@@ -216,9 +205,9 @@ begin
       load_rnd  <='0';
       
       --output variables
-      bdo_valid_bytes_s <= (others => '0');
-      bdo_valid_s <= '0';
-      bdo_type_s <= (others => '0');
+      --bdo_valid_bytes <= (others => '0');
+      bdo_valid <= '0';
+      bdo_type <= (others => '0');
       end_of_block <= '0';
       n_decrypt_op_s <= decrypt_op_s;
       
@@ -259,7 +248,7 @@ begin
 
     when STORE_KEY =>
         if key_valid = '1' then
-            key_ready_s <= '1';
+            key_ready <= '1';
             en_dcount <= '1';
             cyc_state_update_sel <= "01";
             xor_sel <= '0';
@@ -285,7 +274,7 @@ begin
                 if dcount_int = 3 then
                     n_cyc_s <= CYC_ADD_BYTE;
                 end if;
-                bdi_ready_s <= '1';
+                bdi_ready <= '1';
                 state_main_en <= "001";
                 en_dcount <= '1';
             end if;
@@ -297,7 +286,7 @@ begin
                     if bdi_eot = '1' then
                         n_cyc_s <= CYC_ADD_BYTE;
                         if bdi_valid_bytes = x"F" then
-                            bdi_ready_s <= '1';
+                            bdi_ready <= '1';
                             en_dcount <= '1';
                             if dcount_int > 7 then
                                 state_main_sel <= "1000000";
@@ -322,7 +311,7 @@ begin
                         else
                             state_main_en <= "001";
                         end if;
-                        bdi_ready_s <= '1';
+                        bdi_ready <= '1';
                         en_dcount <= '1';
                     end if;
                 elsif bdi_type = "0000" and bdi_valid_bytes = x"F" then
@@ -333,12 +322,12 @@ begin
             end if;
         else
             -- calling_state is ABSORB_MSG
-            bdo_valid_bytes_s <= bdi_valid_bytes_s;
+            bdo_valid_bytes <= bdi_valid_bytes;
             extract_sel <= '1';
             if bdi_type = HDR_MSG then
-                bdo_type_s <= HDR_MSG;
+                bdo_type <= HDR_MSG;
             else
-                bdo_type_s <= HDR_CT;
+                bdo_type <= HDR_CT;
                 cyc_state_update_sel <= "11";
             end if;
             if (dcount_int = TAG_SIZE_CW - 1 ) then
@@ -349,8 +338,8 @@ begin
                     if bdi_eot = '1' then
                         n_cyc_s <= CYC_ADD_BYTE;
                         if bdi_size = "100" then
-                            bdi_ready_s <= '1';
-                            bdo_valid_s <= '1';
+                            bdi_ready <= '1';
+                            bdo_valid <= '1';
                             if dcount_int > 3 then
                                 state_main_en <= "010";
                             else
@@ -362,8 +351,8 @@ begin
                         if dcount_int = 5 then
                             n_cyc_s <= CYC_ADD_BYTE;
                         end if;
-                        bdo_valid_s <= '1';
-                        bdi_ready_s <= '1';
+                        bdo_valid <= '1';
+                        bdi_ready <= '1';
                         en_dcount <= '1';
                         if dcount_int > 3 then
                             state_main_en <= "010";
@@ -388,7 +377,7 @@ begin
             load_dcount <= '1';
             load_rnd <= '1';
             n_cyc_s <= CYC_UP_PERM;
-            bdo_valid_bytes_s <= bdi_valid_bytes_s;
+            bdo_valid_bytes <= bdi_valid_bytes;
             if calling_state = ABSORB_NONCE then
                 n_calling_state <= ABSORB_AD;
                 cu_cd_s <= x"03";
@@ -411,7 +400,7 @@ begin
                         cu_cd_s <= x"80";
                     end if;
                 elsif bdi_valid = '1' and bdi_size(1 downto 0) /= "00" and dcount_int < 11 then
-                    bdi_ready_s <= '1';
+                    bdi_ready <= '1';
                     cycd_sel <= bdi_size(1 downto 0);
                     if bdi_eot = '1' then
                         n_calling_state <= ABSORB_MSG;
@@ -439,18 +428,18 @@ begin
                         state_main_en <= "101";
                     end if;
                 elsif bdi_valid = '1' and bdo_ready = '1' and bdi_size(1 downto 0) /= "00" and dcount_int < 6 then
-                    bdi_ready_s <= '1';
+                    bdi_ready <= '1';
                     cycd_sel <= bdi_size(1 downto 0);
                     if bdi_type = HDR_MSG then
-                        bdo_valid_s <= '1';
-                        bdo_type_s <= HDR_MSG;
+                        bdo_valid <= '1';
+                        bdo_type <= HDR_MSG;
                         extract_sel <= '1';
                         if (dcount_int = TAG_SIZE_CW - 1 ) then
                             end_of_block <= '1';
                         end if;
                     elsif bdi_type = HDR_CT then
-                        bdo_valid_s <= '1';
-                        bdo_type_s <= HDR_CT;
+                        bdo_valid <= '1';
+                        bdo_type <= HDR_CT;
                         extract_sel <= '1';
                         cyc_state_update_sel <= "11";
                     end if;
@@ -490,7 +479,7 @@ begin
                 end if;
                 if bdi_type = HDR_HASH_MSG then
                     if bdi_valid = '1'  and dcount_int /= 4 then
-                        bdi_ready_s <= '1';
+                        bdi_ready <= '1';
                         cycd_sel <= bdi_size(1 downto 0);
                         if bdi_eot = '1' then
                             n_calling_state <= SQUEEZE;
@@ -533,9 +522,9 @@ begin
     when CYC_UP_EXTRACT =>
         -- performing encryption extract the tag and send it
         if (decrypt_op_s /= '1') then
-            bdo_valid_s <= '1';
-            bdo_valid_bytes_s <= (others => '1');
-            bdo_type_s <= HDR_TAG;
+            bdo_valid <= '1';
+            bdo_valid_bytes <= (others => '1');
+            bdo_type <= HDR_TAG;
             extract_sel <= '0';
             --Update counter if data if valid
             if (bdo_ready = '1') then
@@ -555,7 +544,7 @@ begin
         else
             --Verify the TAG if not set the tag to not verified
             if bdi_valid = '1' and msg_auth_ready = '1' then
-                bdi_ready_s <= '1';
+                bdi_ready <= '1';
                 en_dcount <= '1';
                 if (dcount_int = TAG_SIZE_CW - 1) then
                     msg_auth_valid <= '1';
