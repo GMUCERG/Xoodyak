@@ -96,11 +96,8 @@ architecture behavioral of CryptoCore is
     signal mode, n_mode: mode_t;
   
   
-    --Key signals
-    signal key_s: std_logic_vector(CCSW-1 downto 0);
-  
     --data signals
-    signal bdi_s : std_logic_vector(CCW - 1 downto 0);
+    signal bdi_key : std_logic_vector(CCW - 1 downto 0);
     signal decrypt_op_s, n_decrypt_op_s: std_logic;
     
     -- Output signals
@@ -145,8 +142,7 @@ begin
     xor_sel => xor_sel,
     cycd_sel => cycd_sel,
     extract_sel => extract_sel,
-    key => key_s,
-    bdi_data => bdi_s,
+    bdi_key => bdi_key,
     cu_cd => cu_cd_s,
     dcount_in => dcount,
     rnd_counter => rnd_counter,
@@ -155,22 +151,15 @@ begin
     
     --convert to integer for comparison 
     dcount_int <= to_integer(unsigned(dcount));
-    
-    --Mapping 
-    key_s <= reverse_byte(key);
-    --bdi
-    bdi_s               <= reverse_byte(bdi);
-    
-      
+
     --data outputs
-    bdo                 <= reverse_byte(bdo_s);
-    bdo_valid_bytes     <= bdi_valid_bytes;
+    bdo                 <= bdo_s;
     
     
     top_level_states: process(cyc_s, calling_state,
                             decrypt_op_s, decrypt_in,
                             bdo_s, bdo_ready,
-                            bdi_valid, bdi_s,  bdi_valid_bytes, bdi_type, bdi_size, bdi_eot, bdi_eot_prev,
+                            bdi_valid, clk,  bdi_valid_bytes, bdi_type, bdi_size, bdi_eot, bdi_eot_prev,
                             hash_in, gtr_one_perm,
                             dcount_int, rnd_counter,
                             mode,
@@ -185,6 +174,7 @@ begin
       --default values
       key_ready         <= '0';
       bdi_ready         <= '0';
+      bdi_key           <= bdi;
       
       --state_ram_defaults
       state_main_sel      <= "0000000";    --defaults to perm_addr
@@ -208,6 +198,7 @@ begin
       --bdo_valid_bytes <= (others => '0');
       bdo_valid <= '0';
       bdo_type <= (others => '0');
+      bdo_valid_bytes     <= bdi_valid_bytes;
       end_of_block <= '0';
       n_decrypt_op_s <= decrypt_op_s;
       
@@ -247,6 +238,7 @@ begin
         end if;
 
     when STORE_KEY =>
+        bdi_key <= key;
         if key_valid = '1' then
             key_ready <= '1';
             en_dcount <= '1';
@@ -550,7 +542,7 @@ begin
                     msg_auth_valid <= '1';
                     n_cyc_s <= IDLE;
                     --Final TAG word did not match
-                    if (bdi_s /= bdo_s) then
+                    if (bdi /= bdo_s) then
                         msg_auth <= '0';
                     else
                         --The final tag matched and if there other tags matched
@@ -560,7 +552,7 @@ begin
                 else
                     --Prior to the final tag update tag_verified to false if they
                     --do nto match
-                    if (bdi_s /= bdo_s) then
+                    if (bdi /= bdo_s) then
                         n_tag_verified <= '0';
                     end if;
                 end if;
