@@ -85,17 +85,16 @@ begin
         plane_x <= state_main_out_plane0 when "00",
                    state_main_out_plane1 when "01",
                    state_main_out_plane2 when others;
-	--cycle down mux
-	--with cycd_sel select
-	--	cycd_add <=  
-	--	            x"000001" & bdi_data(7 downto 0)  when "01",
-	--				x"0001"   & bdi_data(15 downto 0)  when "10",
-	--				x"01"     & bdi_data(23 downto 0)   when "11",
-	--				x"00000001" when others;
-    --xor_mux_o <=	bdi_data when xor_sel = '0' else cycd_add;
-
-    cycd_add <= (bdi_data and to_stdlogicvector(cycd_add_and srl ((3-to_integer(unsigned(cycd_sel)))*8))) xor to_stdlogicvector(cycd_add_xor sll (to_integer(unsigned(cycd_sel))*8))(DATA_LEN-1 downto 0);
+	with cycd_sel select
+		cycd_add <=  
+		            x"000001" & bdi_data(7 downto 0)  when "01",
+					x"0001"   & bdi_data(15 downto 0)  when "10",
+					x"01"     & bdi_data(23 downto 0)   when "11",
+					x"00000001" when others;
     xor_mux_o <=	bdi_data when xor_sel = '0' else cycd_add;
+
+    --cycd_add <= (bdi_data and to_stdlogicvector(cycd_add_and srl ((3-to_integer(unsigned(cycd_sel)))*8))) xor to_stdlogicvector(cycd_add_xor sll (to_integer(unsigned(cycd_sel))*8))(DATA_LEN-1 downto 0);
+    --xor_mux_o <=	bdi_data when xor_sel = '0' else cycd_add;
 
     temp_xor_out <= temp_ram xor xor_mux_o;
 	

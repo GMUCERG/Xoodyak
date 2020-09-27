@@ -155,7 +155,24 @@ begin
     --data outputs
     bdo                 <= bdo_s;
     
-    
+    test :process(clk)
+    begin
+        if bdi_type = HDR_MSG then
+            extract_sel <= '1';
+            bdo_type <= HDR_MSG;
+        elsif bdi_type = HDR_CT then
+            extract_sel <= '1';
+            bdo_type <= HDR_CT;
+        else
+            bdo_type <= HDR_TAG;
+            extract_sel <= '0';
+        end if;
+        if cyc_s = CYC_ADD_BYTE then
+            xor_sel       <= '1';    --defaults to bdi_data
+        else
+            xor_sel       <= '0';    --defaults to bdi_data
+        end if;
+    end process;    
     top_level_states: process(cyc_s, calling_state,
                             decrypt_op_s, decrypt_in,
                             bdo_s, bdo_ready,
@@ -184,8 +201,6 @@ begin
       --cyc_ops_defaults
       cycd_sel      <= "00";
       cyc_state_update_sel<= "00";
-      xor_sel       <= '0';    --defaults to bdi_data
-      extract_sel     <= '0';     --xor_out
       cu_cd_s         <= (others => '0');
       
       --Defaults for counters
@@ -195,9 +210,7 @@ begin
       load_rnd  <='0';
       
       --output variables
-      --bdo_valid_bytes <= (others => '0');
       bdo_valid <= '0';
-      bdo_type <= (others => '0');
       bdo_valid_bytes     <= bdi_valid_bytes;
       end_of_block <= '0';
       n_decrypt_op_s <= decrypt_op_s;
@@ -208,6 +221,8 @@ begin
       
       n_gtr_one_perm <= gtr_one_perm;
       n_bdi_eot_prev <= '0';
+
+
         
       
     case cyc_s is
@@ -243,7 +258,6 @@ begin
             key_ready <= '1';
             en_dcount <= '1';
             cyc_state_update_sel <= "01";
-            xor_sel <= '0';
             state_main_en <= "001";
         -- Writing the value of cd to the state
         elsif (dcount_int = KEY_WORDS) then
@@ -257,8 +271,6 @@ begin
        end if;
 
     when CYC_DOWN =>
-        xor_sel <= '0';
-        cycd_sel <= bdi_size(1 downto 0);
         n_bdi_eot_prev <= bdi_eot;
         if (calling_state = ABSORB_NONCE) then
             n_decrypt_op_s <= decrypt_in;
@@ -314,12 +326,11 @@ begin
             end if;
         else
             -- calling_state is ABSORB_MSG
-            bdo_valid_bytes <= bdi_valid_bytes;
-            extract_sel <= '1';
-            if bdi_type = HDR_MSG then
-                bdo_type <= HDR_MSG;
-            else
-                bdo_type <= HDR_CT;
+            --if bdi_type = HDR_MSG then
+            --    bdo_type <= HDR_MSG;
+            --else
+                --bdo_type <= HDR_CT;
+            if bdi_type = HDR_CT then
                 cyc_state_update_sel <= "11";
             end if;
             if (dcount_int = TAG_SIZE_CW - 1 ) then
@@ -364,12 +375,10 @@ begin
         if bdi_type = "0000" and bdi_eot_prev /= '1' and bdi_eot /= '1' and bdi_valid_bytes = "0000" then
             null;
         else
-            xor_sel <= '1';
             en_dcount <= '1';
             load_dcount <= '1';
             load_rnd <= '1';
             n_cyc_s <= CYC_UP_PERM;
-            bdo_valid_bytes <= bdi_valid_bytes;
             if calling_state = ABSORB_NONCE then
                 n_calling_state <= ABSORB_AD;
                 cu_cd_s <= x"03";
@@ -424,15 +433,13 @@ begin
                     cycd_sel <= bdi_size(1 downto 0);
                     if bdi_type = HDR_MSG then
                         bdo_valid <= '1';
-                        bdo_type <= HDR_MSG;
-                        extract_sel <= '1';
+                        --bdo_type <= HDR_MSG;
                         if (dcount_int = TAG_SIZE_CW - 1 ) then
                             end_of_block <= '1';
                         end if;
                     elsif bdi_type = HDR_CT then
                         bdo_valid <= '1';
-                        bdo_type <= HDR_CT;
-                        extract_sel <= '1';
+                        --bdo_type <= HDR_CT;
                         cyc_state_update_sel <= "11";
                     end if;
                     if bdi_eot = '1' then
@@ -516,8 +523,6 @@ begin
         if (decrypt_op_s /= '1') then
             bdo_valid <= '1';
             bdo_valid_bytes <= (others => '1');
-            bdo_type <= HDR_TAG;
-            extract_sel <= '0';
             --Update counter if data if valid
             if (bdo_ready = '1') then
                 en_dcount <= '1';
