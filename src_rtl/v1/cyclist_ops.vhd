@@ -74,6 +74,8 @@ architecture Behavioral of cyclist_ops is
 	
 
 	signal plane_2_input: std_logic_vector(PLANE_LEN-1 downto 0);
+    constant cycd_add_xor :bit_vector := x"0000000001";
+    constant cycd_add_and :bit_vector := x"00FFFFFF";
 
 
 begin
@@ -84,17 +86,18 @@ begin
                    state_main_out_plane1 when "01",
                    state_main_out_plane2 when others;
 	--cycle down mux
-	with cycd_sel select
-		cycd_add <=  
-		            x"000001" & bdi_data(7 downto 0)  when "01",
-					x"0001"   & bdi_data(15 downto 0)  when "10",
-					x"01"     & bdi_data(23 downto 0)   when "11",
-					x"00000001" when others;
+	--with cycd_sel select
+	--	cycd_add <=  
+	--	            x"000001" & bdi_data(7 downto 0)  when "01",
+	--				x"0001"   & bdi_data(15 downto 0)  when "10",
+	--				x"01"     & bdi_data(23 downto 0)   when "11",
+	--				x"00000001" when others;
+    --xor_mux_o <=	bdi_data when xor_sel = '0' else cycd_add;
 
-	-- input xor mux
+    cycd_add <= (bdi_data and to_stdlogicvector(cycd_add_and srl ((3-to_integer(unsigned(cycd_sel)))*8))) xor to_stdlogicvector(cycd_add_xor sll (to_integer(unsigned(cycd_sel))*8))(DATA_LEN-1 downto 0);
     xor_mux_o <=	bdi_data when xor_sel = '0' else cycd_add;
 
-	temp_xor_out <= temp_ram xor xor_mux_o;
+    temp_xor_out <= temp_ram xor xor_mux_o;
 	
 
     bdo_out_t <= temp_ram when extract_sel = '0' else temp_xor_out;
