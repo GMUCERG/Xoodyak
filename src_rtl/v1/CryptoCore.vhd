@@ -62,7 +62,7 @@ architecture behavioral of CryptoCore is
     --cyc_ops inputs only
     signal cycd_sel: std_logic_vector(1 downto 0);
     signal extract_sel: std_logic;
-    signal cyc_state_update_sel: std_logic_vector(1 downto 0);
+    signal cyc_state_update_sel: std_logic;
     signal xor_sel: std_logic;
     signal cu_cd_s: std_logic_vector(7 downto 0);
     
@@ -200,7 +200,7 @@ begin
       
       --cyc_ops_defaults
       cycd_sel      <= "00";
-      cyc_state_update_sel<= "00";
+      cyc_state_update_sel<= '0';
       cu_cd_s         <= (others => '0');
       
       --Defaults for counters
@@ -253,15 +253,14 @@ begin
         end if;
 
     when STORE_KEY =>
-        bdi_key <= key;
         if key_valid = '1' then
+            bdi_key <= key;
             key_ready <= '1';
             en_dcount <= '1';
-            cyc_state_update_sel <= "01";
             state_main_en <= "001";
         -- Writing the value of cd to the state
         elsif (dcount_int = KEY_WORDS) then
-            cyc_state_update_sel <= "10";  --Specific value 0x000000100
+            bdi_key <= x"00010000"; --rotate internal to cyc
             state_main_en <= "110";
             load_dcount <= '1';
             cu_cd_s <= x"02";
@@ -326,12 +325,8 @@ begin
             end if;
         else
             -- calling_state is ABSORB_MSG
-            --if bdi_type = HDR_MSG then
-            --    bdo_type <= HDR_MSG;
-            --else
-                --bdo_type <= HDR_CT;
             if bdi_type = HDR_CT then
-                cyc_state_update_sel <= "11";
+                cyc_state_update_sel <= '1';
             end if;
             if (dcount_int = TAG_SIZE_CW - 1 ) then
                 end_of_block <= '1';
@@ -433,14 +428,11 @@ begin
                     cycd_sel <= bdi_size(1 downto 0);
                     if bdi_type = HDR_MSG then
                         bdo_valid <= '1';
-                        --bdo_type <= HDR_MSG;
                         if (dcount_int = TAG_SIZE_CW - 1 ) then
                             end_of_block <= '1';
                         end if;
                     elsif bdi_type = HDR_CT then
-                        bdo_valid <= '1';
-                        --bdo_type <= HDR_CT;
-                        cyc_state_update_sel <= "11";
+                        cyc_state_update_sel <= '1';
                     end if;
                     if bdi_eot = '1' then
                         n_gtr_one_perm <= '0';

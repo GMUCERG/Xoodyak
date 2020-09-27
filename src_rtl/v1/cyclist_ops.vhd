@@ -30,7 +30,7 @@ entity cyclist_ops is
 	    state_main_sel: std_logic_vector(6 downto 0);
 
 		--controls for mux
-		cyc_state_update_sel: in std_logic_vector(1 downto 0);
+		cyc_state_update_sel: in std_logic;
 		xor_sel: in std_logic;
 		cycd_sel: in std_logic_vector(1 downto 0);
 		extract_sel: in std_logic;
@@ -116,12 +116,7 @@ begin
 	                   temp_ram(31 downto 25) & ('1' xor temp_ram(24)) & bdi_data(23 downto 0) when "11",
 	                   bdi_data when others; -- ct is full 4 bytes
 	
-    with cyc_state_update_sel select
-        temp_cyc_state <= 
-                            temp_xor_out when "00",
-                            key when "01",
-                            x"00000100" when "10",
-                            decrypt_mux when others;
+    temp_cyc_state <= temp_xor_out when cyc_state_update_sel = '0' else decrypt_mux;
     -- Added for larger perm
     with dcount_in(1 downto 0) select
         cyc_state_update <=
